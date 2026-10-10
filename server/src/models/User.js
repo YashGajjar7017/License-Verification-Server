@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       select: false, // Never returned by default in queries
-      minlength: 8,
+      minlength: 4,
     },
     googleId: {
       type: String,

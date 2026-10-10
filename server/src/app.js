@@ -13,6 +13,7 @@ const cookieParser = require('cookie-parser');
 const passport = require('./config/passport');
 const { connectDB } = require('./config/database');
 const logger = require('./utils/logger');
+const { seedDummyData } = require('./utils/seed');
 const { generalLimiter } = require('./middleware/rateLimit');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
@@ -125,6 +126,11 @@ const PORT = parseInt(process.env.PORT || '5000', 10);
 
 async function start() {
   await connectDB();
+  try {
+    await seedDummyData();
+  } catch (seedErr) {
+    logger.warn('Seed execution notice:', { message: seedErr.message });
+  }
   app.listen(PORT, () => {
     logger.info(`🚀 Server running on http://localhost:${PORT} [${process.env.NODE_ENV || 'development'}]`);
   });

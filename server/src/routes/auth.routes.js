@@ -30,10 +30,8 @@ const registerValidation = [
   body('name').trim().notEmpty().withMessage('Name is required').isLength({ max: 100 }),
   body('email').isEmail().withMessage('Valid email required').normalizeEmail(),
   body('password')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Password must contain uppercase, lowercase, and a number'),
+    .isLength({ min: 4 })
+    .withMessage('Password must be at least 4 characters'),
 ];
 
 const loginValidation = [

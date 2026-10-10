@@ -38,10 +38,10 @@ const licenseVerifyLimiter = rateLimit({
   skip: (req) => process.env.NODE_ENV === 'test',
 });
 
-/** Very strict limiter for authentication endpoints (brute-force protection) */
+/** Limiter for authentication endpoints (brute-force protection) */
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15-minute window
-  max: 10,
+  max: process.env.NODE_ENV === 'production' ? 15 : 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
