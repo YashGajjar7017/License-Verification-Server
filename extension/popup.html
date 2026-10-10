@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VaultKey Extension</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="extension-container">
+    <!-- Top Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo-shield">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">VaultKey</div>
+          <div class="brand-sub">HS512 Quantum Vault</div>
+        </div>
+      </div>
+      <div class="header-status">
+        <span class="status-dot" id="serverDot" title="Server Status"></span>
+        <span class="status-text" id="statusLabel">Checking...</span>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="tab-save" id="tabBtnSave">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save
+      </button>
+      <button class="tab-btn" data-tab="tab-vault" id="tabBtnVault">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Vault
+      </button>
+      <button class="tab-btn" data-tab="tab-gen" id="tabBtnGen">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Generate
+      </button>
+      <button class="tab-btn" data-tab="tab-auth" id="tabBtnAuth">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Account
+      </button>
+    </nav>
+
+    <!-- Notification Toast Area -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- Main Content Panels -->
+    <main class="panel-container">
+      <!-- 1. SAVE TAB -->
+      <section id="tab-save" class="panel active">
+        <div class="current-site-bar">
+          <div class="site-info">
+            <span class="site-badge">Active Tab</span>
+            <span id="siteDomain" class="site-domain">Fetching URL...</span>
+          </div>
+          <button id="btnRefreshSite" class="icon-btn" title="Refresh current tab URL">↻</button>
+        </div>
+
+        <form id="saveForm" class="form-grid">
+          <div class="input-group">
+            <label>Credential Label *</label>
+            <input type="text" id="saveLabel" placeholder="e.g. GitHub Enterprise" required>
+          </div>
+
+          <div class="input-row">
+            <div class="input-group flex-1">
+              <label>Category</label>
+              <select id="saveCategory">
+                <option value="password">Password</option>
+                <option value="api_key">API Key</option>
+                <option value="license_key">License Key</option>
+                <option value="token">Token</option>
+                <option value="certificate">Certificate</option>
+                <option value="ssh_key">SSH Key</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="input-group flex-1">
+              <label>Username / Email</label>
+              <input type="text" id="saveUsername" placeholder="user@example.com">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <div class="label-with-action">
+              <label>Secret Value (AES-256-GCM) *</label>
+              <button type="button" id="btnQuickGenPass" class="text-link-btn">⚡ Gen Password</button>
+            </div>
+            <div class="secret-input-wrapper">
+              <input type="password" id="saveSecret" placeholder="Enter password, API key, or token" required>
+              <button type="button" id="btnToggleSecretVis" class="icon-toggle-btn" title="Toggle visibility">👁️</button>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label>Website URL</label>
+            <input type="text" id="saveWebsite" placeholder="https://...">
+          </div>
+
+          <div class="input-group">
+            <label>Tags (comma separated)</label>
+            <input type="text" id="saveTags" placeholder="work, production, github">
+          </div>
+
+          <button type="submit" id="btnSaveSubmit" class="btn-primary">
+            <span id="saveBtnText">🔒 Encrypt & Save to Vault</span>
+          </button>
+        </form>
+      </section>
+
+      <!-- 2. VAULT LIST TAB -->
+      <section id="tab-vault" class="panel">
+        <div class="search-bar">
+          <input type="text" id="vaultSearch" placeholder="Search keys, passwords, accounts...">
+          <button id="btnRefreshVault" class="icon-btn" title="Refresh Vault">↻</button>
+        </div>
+
+        <div id="vaultList" class="vault-items-list">
+          <div class="empty-state">Loading credentials from VaultKey database...</div>
+        </div>
+      </section>
+
+      <!-- 3. GENERATOR TAB -->
+      <section id="tab-gen" class="panel">
+        <div class="gen-box">
+          <div class="gen-output-wrapper">
+            <input type="text" id="genResult" readonly class="gen-result">
+            <button id="btnCopyGen" class="icon-btn" title="Copy generated secret">📋</button>
+          </div>
+          <div class="gen-strength" id="genStrengthBar">
+            <div class="bar-fill" id="strengthFill"></div>
+          </div>
+        </div>
+
+        <div class="gen-options">
+          <div class="slider-row">
+            <label>Length: <span id="genLengthVal">24</span></label>
+            <input type="range" id="genLength" min="8" max="64" value="24">
+          </div>
+
+          <div class="checkbox-grid">
+            <label class="check-label"><input type="checkbox" id="genUpper" checked> A-Z Uppercase</label>
+            <label class="check-label"><input type="checkbox" id="genLower" checked> a-z Lowercase</label>
+            <label class="check-label"><input type="checkbox" id="genNumbers" checked> 0-9 Numbers</label>
+            <label class="check-label"><input type="checkbox" id="genSymbols" checked> !@#$% Symbols</label>
+          </div>
+
+          <div class="gen-type-row">
+            <button type="button" id="btnRegenPass" class="btn-secondary flex-1">🎲 New Password</button>
+            <button type="button" id="btnGenLicenseKey" class="btn-secondary flex-1">🛡️ License Key</button>
+          </div>
+
+          <button type="button" id="btnUseInSave" class="btn-primary mt-3">
+            Use in Save Tab ➔
+          </button>
+        </div>
+      </section>
+
+      <!-- 4. ACCOUNT / SETTINGS TAB -->
+      <section id="tab-auth" class="panel">
+        <!-- Logged in state -->
+        <div id="authLoggedIn" class="auth-box hidden">
+          <div class="user-profile-card">
+            <div class="avatar" id="userAvatar">A</div>
+            <div>
+              <div class="user-name" id="userName">Administrator</div>
+              <div class="user-email" id="userEmail">admin@example.com</div>
+              <div class="user-badge" id="userRole">ADMIN • HS512 ENCRYPTED</div>
+            </div>
+          </div>
+
+          <div class="quick-stats-row">
+            <div class="stat-pill">
+              <span class="stat-num" id="statLicCount">-</span>
+              <span class="stat-lbl">Licenses</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-num" id="statVaultCount">-</span>
+              <span class="stat-lbl">Vault Secrets</span>
+            </div>
+          </div>
+
+          <a href="http://localhost:3000/dashboard" target="_blank" class="btn-secondary w-full text-center mt-3">
+            Open Web Dashboard ↗
+          </a>
+          <button type="button" id="btnLogout" class="btn-danger w-full mt-2">Sign Out</button>
+        </div>
+
+        <!-- Logged out state (Login form) -->
+        <div id="authLoggedOut" class="auth-box">
+          <div class="auth-intro">
+            <h4>Sign in to VaultKey</h4>
+            <p>Connect your browser to direct database encryption</p>
+          </div>
+
+          <form id="loginForm" class="form-grid">
+            <div class="input-group">
+              <label>Work Email</label>
+              <input type="email" id="loginEmail" placeholder="admin@example.com" value="admin@example.com" required>
+            </div>
+            <div class="input-group">
+              <label>Password</label>
+              <input type="password" id="loginPassword" placeholder="admin" value="admin" required>
+            </div>
+            <button type="submit" id="btnLoginSubmit" class="btn-primary">Sign In with HS512</button>
+          </form>
+
+          <div class="settings-divider">Server Connection</div>
+          <div class="input-group">
+            <label>Backend API Base URL</label>
+            <input type="text" id="serverApiUrl" value="http://localhost:5000/api">
+          </div>
+          <button type="button" id="btnSaveServerUrl" class="btn-secondary w-full">Save Server Config</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span>AES-256-GCM AEAD • HS512</span>
+      <span id="footerSiteIndicator">Ready</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
