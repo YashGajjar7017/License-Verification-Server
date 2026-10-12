@@ -112,6 +112,54 @@ const licenseSchema = new mongoose.Schema(
     revokedAt: Date,
     revokedReason: String,
 
+    // Advanced features & licensee info
+    licenseeName: {
+      type: String,
+      trim: true,
+      maxlength: 150,
+    },
+    licenseeEmail: {
+      type: String,
+      trim: true,
+      maxlength: 150,
+    },
+    orderRef: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    hardwarePolicy: {
+      type: String,
+      enum: ['floating', 'strict_fingerprint', 'single_machine'],
+      default: 'floating',
+    },
+    ipRestriction: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    domainRestriction: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    features: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    gracePeriodDays: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 365,
+    },
+    keyFormat: {
+      type: String,
+      default: 'STANDARD-4x6',
+    },
+
     // API key for external verification (optional, rate-limited access)
     apiKeyHeader: {
       type: String,

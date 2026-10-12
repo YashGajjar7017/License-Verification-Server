@@ -11,6 +11,7 @@
 
 const { validationResult } = require('express-validator');
 const License = require('../models/License');
+const Vault = require('../models/Vault');
 const {
   encrypt,
   decrypt,
@@ -27,7 +28,7 @@ const logger = require('../utils/logger');
 
 /**
  * POST /api/licenses
- * Body: { productName, tier, maxActivations, expiresAt, notes, recoveryHint }
+ * Body: { productName, tier, maxActivations, expiresAt, notes, recoveryHint, ...advancedOptions }
  */
 async function createLicense(req, res, next) {
   try {
@@ -36,14 +37,43 @@ async function createLicense(req, res, next) {
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    const { productName, tier, maxActivations, expiresAt, notes, recoveryHint } = req.body;
+    const {
+      productName,
+      tier,
+      maxActivations,
+      expiresAt,
+      notes,
+      recoveryHint,
+      keyPrefix,
+      keyChunks,
+      keyChunkLen,
+      keySeparator,
+      licenseeName,
+      licenseeEmail,
+      orderRef,
+      hardwarePolicy,
+      ipRestriction,
+      domainRestriction,
+      features,
+      gracePeriodDays,
+      autoVault,
+    } = req.body;
 
-    // Generate a cryptographically secure license key
-    const rawKey = generateLicenseKey();
+    // Generate a cryptographically secure license key with custom formatting if specified
+    const rawKey = generateLicenseKey({
+      prefix: keyPrefix,
+      chunks: keyChunks,
+      chunkLen: keyChunkLen,
+      separator: keySeparator,
+    });
 
     // Encrypt for storage and hash for lookup
     const keyEncrypted = encrypt(rawKey);
     const keyHash = sha256(rawKey);
+
+    const keyFormatDesc = keyPrefix
+      ? `${keyPrefix.toUpperCase()}-${keyChunks || 4}x${keyChunkLen || 4}`
+      : 'STANDARD-4x6';
 
     const license = await License.create({
       userId: req.user.id,
@@ -55,8 +85,34 @@ async function createLicense(req, res, next) {
       expiresAt: expiresAt ? new Date(expiresAt) : null,
       notes,
       recoveryHint,
+      licenseeName,
+      licenseeEmail,
+      orderRef,
+      hardwarePolicy: hardwarePolicy || 'floating',
+      ipRestriction,
+      domainRestriction,
+      features: Array.isArray(features) ? features : [],
+      gracePeriodDays: gracePeriodDays ? parseInt(gracePeriodDays, 10) : 0,
+      keyFormat: keyFormatDesc,
       status: 'active',
     });
+
+    // Automatically store encrypted backup copy into Credential Vault if requested
+    if (autoVault) {
+      try {
+        await Vault.create({
+          userId: req.user.id,
+          label: `${productName} (${(tier || 'basic').toUpperCase()}) License`,
+          category: 'license_key',
+          description: `Auto-stored encrypted license for ${productName}. Stored on ${new Date().toISOString()}`,
+          username: licenseeEmail || licenseeName || undefined,
+          encryptedData: keyEncrypted,
+          tags: ['license', tier || 'basic', productName.toLowerCase().replace(/\s+/g, '-')],
+        });
+      } catch (vaultErr) {
+        logger.warn('Failed to auto-save license to vault', { error: vaultErr.message });
+      }
+    }
 
     logger.info('License created', { licenseId: license._id, userId: req.user.id });
 
@@ -67,12 +123,19 @@ async function createLicense(req, res, next) {
       licenseKey: rawKey, // ⚠️  ONLY shown at creation time
       license: {
         id: license._id,
+        _id: license._id,
         productName: license.productName,
         tier: license.tier,
         status: license.status,
         maxActivations: license.maxActivations,
         expiresAt: license.expiresAt,
         recoveryHint: license.recoveryHint,
+        licenseeName: license.licenseeName,
+        licenseeEmail: license.licenseeEmail,
+        orderRef: license.orderRef,
+        hardwarePolicy: license.hardwarePolicy,
+        features: license.features,
+        keyFormat: license.keyFormat,
         createdAt: license.createdAt,
       },
     });

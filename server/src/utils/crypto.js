@@ -137,26 +137,38 @@ function hmacVerify(data, signature, secret = process.env.HMAC_SECRET) {
 }
 
 /**
- * Generates a cryptographically secure random license key in the format:
- * XXXX-XXXX-XXXX-XXXX (uppercase alphanumeric, 4 groups of 6)
+ * Generates a cryptographically secure random license key.
+ * Supports custom prefix, chunks, chunkLen, and separator.
  *
+ * @param {Object} [options]
+ * @param {string} [options.prefix] - Optional prefix like 'VKPRO', 'VKENT'
+ * @param {number} [options.chunks=4] - Number of chunks (default 4)
+ * @param {number} [options.chunkLen=5] - Chars per chunk (default 5 or 6)
+ * @param {string} [options.separator='-'] - Separator between chunks
  * @returns {string} - License key string
  */
-function generateLicenseKey() {
+function generateLicenseKey(options = {}) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // avoid ambiguous chars (0,O,1,I)
-  const groups = 4;
-  const groupLen = 6;
-  let key = '';
+  const prefix = options.prefix ? String(options.prefix).trim().toUpperCase() : '';
+  const chunks = Math.min(Math.max(parseInt(options.chunks, 10) || (prefix ? 3 : 4), 2), 8);
+  const chunkLen = Math.min(Math.max(parseInt(options.chunkLen, 10) || (prefix ? 4 : 5), 3), 8);
+  const separator = options.separator || '-';
 
-  for (let g = 0; g < groups; g++) {
-    for (let i = 0; i < groupLen; i++) {
-      const rand = crypto.randomInt(0, chars.length);
-      key += chars[rand];
-    }
-    if (g < groups - 1) key += '-';
+  const parts = [];
+  if (prefix) {
+    parts.push(prefix);
   }
 
-  return key;
+  for (let g = 0; g < chunks; g++) {
+    let chunk = '';
+    for (let i = 0; i < chunkLen; i++) {
+      const rand = crypto.randomInt(0, chars.length);
+      chunk += chars[rand];
+    }
+    parts.push(chunk);
+  }
+
+  return parts.join(separator);
 }
 
 /**

@@ -237,30 +237,59 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit Button */}
-            <motion.button
-              type="submit"
-              disabled={isLoading}
-              className="btn-liquid-primary w-full mt-2"
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-              style={{
-                opacity: isLoading ? 0.75 : 1,
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Verifying Credentials...</span>
-                </>
-              ) : (
-                <>
-                  <span>Unlock Vault</span>
-                  <ArrowRight size={17} />
-                </>
-              )}
-            </motion.button>
+            {/* Button Row with Unlock Vault & Demo Sidebutton */}
+            <div className="flex items-center gap-2.5 mt-2 w-full">
+              <motion.button
+                type="submit"
+                disabled={isLoading}
+                className="btn-liquid-primary flex-1"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  opacity: isLoading ? 0.75 : 1,
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Verifying Credentials...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Unlock Vault</span>
+                    <ArrowRight size={17} />
+                  </>
+                )}
+              </motion.button>
+
+              {/* Dedicated Small Sidebutton for Demo */}
+              <motion.button
+                type="button"
+                onClick={handleFillDemo}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.95 }}
+                title="Fill demo credentials (admin@example.com / admin)"
+                className="h-[46px] px-3.5 rounded-xl flex items-center justify-center gap-1.5 font-semibold text-xs transition-all relative overflow-hidden group shrink-0"
+                style={{
+                  background: demoFilled
+                    ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(6, 182, 212, 0.3))'
+                    : 'linear-gradient(135deg, rgba(124, 58, 237, 0.22), rgba(6, 182, 212, 0.18))',
+                  border: demoFilled
+                    ? '1px solid rgba(16, 185, 129, 0.6)'
+                    : '1px solid rgba(124, 58, 237, 0.45)',
+                  color: demoFilled ? '#10b981' : 'var(--color-primary-light)',
+                  boxShadow: '0 4px 14px rgba(124, 58, 237, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.2)',
+                  backdropFilter: 'blur(12px)',
+                }}
+              >
+                <Zap
+                  size={14}
+                  className={demoFilled ? 'animate-bounce text-emerald-400' : 'group-hover:rotate-12 transition-transform text-amber-300'}
+                />
+                <span className="tracking-wide font-bold">{demoFilled ? 'Filled ✓' : 'Demo'}</span>
+              </motion.button>
+            </div>
           </form>
 
           {/* Divider */}

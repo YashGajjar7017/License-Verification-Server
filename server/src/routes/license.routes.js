@@ -32,7 +32,7 @@ const createValidation = [
   body('productName').trim().notEmpty().withMessage('Product name is required').isLength({ max: 150 }),
   body('tier').optional().isIn(['free', 'basic', 'pro', 'enterprise', 'lifetime']),
   body('maxActivations').optional().isInt({ min: 1, max: 1000 }),
-  body('expiresAt').optional().isISO8601().withMessage('expiresAt must be ISO 8601 date'),
+  body('expiresAt').optional({ checkFalsy: true }).isISO8601().withMessage('expiresAt must be ISO 8601 date'),
 ];
 
 const idParam = [param('id').isMongoId().withMessage('Invalid license ID')];
