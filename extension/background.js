@@ -3,17 +3,19 @@
  */
 
 chrome.runtime.onInstalled.addListener(() => {
-  // Create context menus for fast access
-  chrome.contextMenus.create({
-    id: 'vaultkey-open-dashboard',
-    title: 'Open VaultKey Web Dashboard',
-    contexts: ['action'],
-  });
+  // Clear any existing menus first to prevent duplicate ID errors
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: 'vaultkey-open-dashboard',
+      title: 'Open VaultKey Web Dashboard',
+      contexts: ['action'],
+    });
 
-  chrome.contextMenus.create({
-    id: 'vaultkey-save-selection',
-    title: 'Copy selection to VaultKey',
-    contexts: ['selection'],
+    chrome.contextMenus.create({
+      id: 'vaultkey-save-selection',
+      title: 'Copy selection to VaultKey',
+      contexts: ['selection'],
+    });
   });
 
   console.log('VaultKey Chrome Extension initialized');

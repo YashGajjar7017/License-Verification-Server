@@ -199,6 +199,11 @@
             <p>Connect your browser to direct database encryption</p>
           </div>
 
+          <!-- Quick 1-Click Demo Fill -->
+          <button type="button" id="btnQuickDemoLogin" class="btn-secondary w-full" style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;margin-bottom:12px;border-color:rgba(124,58,237,0.4);background:rgba(124,58,237,0.12);color:#a78bfa;">
+            ⚡ Auto-Fill Demo (admin@example.com)
+          </button>
+
           <form id="loginForm" class="form-grid">
             <div class="input-group">
               <label>Work Email</label>
@@ -208,15 +213,24 @@
               <label>Password</label>
               <input type="password" id="loginPassword" placeholder="admin" value="admin" required>
             </div>
-            <button type="submit" id="btnLoginSubmit" class="btn-primary">Sign In with HS512</button>
+            <button type="submit" id="btnLoginSubmit" class="btn-primary">
+              <span id="loginBtnText">Sign In with HS512</span>
+            </button>
           </form>
+
+          <div style="text-align:center;margin-top:10px;font-size:11px;opacity:0.8;">
+            Need an account? <a href="http://localhost:3000/register" target="_blank" style="color:#06b6d4;text-decoration:none;font-weight:600;">Create one free ↗</a>
+          </div>
 
           <div class="settings-divider">Server Connection</div>
           <div class="input-group">
             <label>Backend API Base URL</label>
             <input type="text" id="serverApiUrl" value="http://localhost:5000/api">
           </div>
-          <button type="button" id="btnSaveServerUrl" class="btn-secondary w-full">Save Server Config</button>
+          <div style="display:flex;gap:8px;">
+            <button type="button" id="btnSaveServerUrl" class="btn-secondary" style="flex:1;">Save URL</button>
+            <button type="button" id="btnTestServerUrl" class="btn-secondary" style="flex:1;">Ping Server</button>
+          </div>
         </div>
       </section>
     </main>

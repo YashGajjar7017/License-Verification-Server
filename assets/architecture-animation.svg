@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 380" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="archBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#140f2b"/>
+      <stop offset="60%" stop-color="#0b0818"/>
+      <stop offset="100%" stop-color="#05040a"/>
+    </radialGradient>
+
+    <!-- Node Gradients -->
+    <linearGradient id="clientGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="extGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="serverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="cryptoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="dbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#ef4444"/>
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="nodeGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <style>
+      @keyframes dashFlow {
+        from { stroke-dashoffset: 60; }
+        to { stroke-dashoffset: 0; }
+      }
+      @keyframes pulseNode {
+        0%, 100% { transform: scale(1); opacity: 0.95; }
+        50% { transform: scale(1.02); opacity: 1; }
+      }
+      @keyframes packetTravel1 {
+        0% { transform: translate(175px, 120px); opacity: 0; }
+        15% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translate(460px, 190px); opacity: 0; }
+      }
+      @keyframes packetTravel2 {
+        0% { transform: translate(175px, 260px); opacity: 0; }
+        15% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translate(460px, 190px); opacity: 0; }
+      }
+      @keyframes packetTravel3 {
+        0% { transform: translate(460px, 190px); opacity: 0; }
+        15% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translate(745px, 120px); opacity: 0; }
+      }
+      @keyframes packetTravel4 {
+        0% { transform: translate(460px, 190px); opacity: 0; }
+        15% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translate(745px, 260px); opacity: 0; }
+      }
+
+      .flow-path {
+        stroke-dasharray: 6 4;
+        animation: dashFlow 1.8s linear infinite;
+      }
+      .node-core {
+        transform-origin: center;
+        animation: pulseNode 3s ease-in-out infinite;
+      }
+      .p1 { animation: packetTravel1 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+      .p2 { animation: packetTravel2 2.2s cubic-bezier(0.4, 0, 0.2, 1) 0.6s infinite; }
+      .p3 { animation: packetTravel3 2.2s cubic-bezier(0.4, 0, 0.2, 1) 1.1s infinite; }
+      .p4 { animation: packetTravel4 2.2s cubic-bezier(0.4, 0, 0.2, 1) 1.7s infinite; }
+    </style>
+  </defs>
+
+  <!-- Deep Background -->
+  <rect width="920" height="380" rx="16" fill="url(#archBg)" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+
+  <!-- Architecture Subtitle -->
+  <text x="460" y="38" text-anchor="middle" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" letter-spacing="2">
+    VAULTKEY END-TO-END CRYPTOGRAPHIC TOPOLOGY
+  </text>
+
+  <!-- Connection Pathways (Bézier Curves) -->
+  <!-- Left to Center -->
+  <path d="M 235 120 C 350 120, 350 190, 400 190" fill="none" stroke="#38bdf8" stroke-width="2.5" opacity="0.6" class="flow-path"/>
+  <path d="M 235 260 C 350 260, 350 190, 400 190" fill="none" stroke="#ec4899" stroke-width="2.5" opacity="0.6" class="flow-path"/>
+
+  <!-- Center to Right -->
+  <path d="M 520 190 C 570 190, 570 120, 685 120" fill="none" stroke="#10b981" stroke-width="2.5" opacity="0.6" class="flow-path"/>
+  <path d="M 520 190 C 570 190, 570 260, 685 260" fill="none" stroke="#f59e0b" stroke-width="2.5" opacity="0.6" class="flow-path"/>
+
+  <!-- Traveling Glowing Packets -->
+  <circle cx="0" cy="0" r="5" fill="#38bdf8" class="p1" filter="url(#nodeGlow)"/>
+  <circle cx="0" cy="0" r="5" fill="#ec4899" class="p2" filter="url(#nodeGlow)"/>
+  <circle cx="0" cy="0" r="5" fill="#10b981" class="p3" filter="url(#nodeGlow)"/>
+  <circle cx="0" cy="0" r="5" fill="#f59e0b" class="p4" filter="url(#nodeGlow)"/>
+
+  <!-- 1. NODE: Next.js Web Dashboard (Top-Left) -->
+  <g transform="translate(65, 75)" class="node-core">
+    <rect width="170" height="90" rx="12" fill="#101328" stroke="url(#clientGrad)" stroke-width="1.8" filter="url(#nodeGlow)"/>
+    <text x="18" y="28" fill="#38bdf8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="11" font-weight="800" letter-spacing="1">NEXT.JS 16 WEB APP</text>
+    <text x="18" y="48" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13" font-weight="700">Liquid Dashboard</text>
+    <text x="18" y="68" fill="#94a3b8" font-family="monospace" font-size="10">React 19 • Framer Motion</text>
+    <circle cx="150" cy="24" r="4" fill="#38bdf8"/>
+  </g>
+
+  <!-- 2. NODE: Chrome Extension (Bottom-Left) -->
+  <g transform="translate(65, 215)" class="node-core">
+    <rect width="170" height="90" rx="12" fill="#190e24" stroke="url(#extGrad)" stroke-width="1.8" filter="url(#nodeGlow)"/>
+    <text x="18" y="28" fill="#f472b6" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="11" font-weight="800" letter-spacing="1">CHROME EXTENSION</text>
+    <text x="18" y="48" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13" font-weight="700">Manifest V3 Vault</text>
+    <text x="18" y="68" fill="#94a3b8" font-family="monospace" font-size="10">Autofill • Active Tab Ping</text>
+    <circle cx="150" cy="24" r="4" fill="#ec4899"/>
+  </g>
+
+  <!-- 3. NODE: Express Gateway (Center) -->
+  <g transform="translate(370, 130)" class="node-core">
+    <rect width="180" height="120" rx="14" fill="#17113a" stroke="url(#serverGrad)" stroke-width="2.2" filter="url(#nodeGlow)"/>
+    <rect x="0" y="0" width="180" height="26" rx="14" fill="#241a54"/>
+    <text x="90" y="17" text-anchor="middle" fill="#c084fc" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="11" font-weight="800" letter-spacing="1">REST API GATEWAY</text>
+    <text x="90" y="52" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="15" font-weight="800">Node / Express</text>
+    <text x="90" y="74" text-anchor="middle" fill="#a78bfa" font-family="monospace" font-size="11" font-weight="600">HS512 JWT Auth</text>
+    <text x="90" y="92" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="10">CORS • Rate Limiters</text>
+    <text x="90" y="108" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="9">Port :5000 /api</text>
+  </g>
+
+  <!-- 4. NODE: Hardware & Cryptographic Engine (Top-Right) -->
+  <g transform="translate(685, 75)" class="node-core">
+    <rect width="170" height="90" rx="12" fill="#0d241c" stroke="url(#cryptoGrad)" stroke-width="1.8" filter="url(#nodeGlow)"/>
+    <text x="18" y="28" fill="#34d399" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="11" font-weight="800" letter-spacing="1">CRYPTO &amp; HW ENGINE</text>
+    <text x="18" y="48" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13" font-weight="700">AES-256-GCM AEAD</text>
+    <text x="18" y="68" fill="#94a3b8" font-family="monospace" font-size="10">HWID Binding • Keygen</text>
+    <circle cx="150" cy="24" r="4" fill="#10b981"/>
+  </g>
+
+  <!-- 5. NODE: MongoDB Cluster (Bottom-Right) -->
+  <g transform="translate(685, 215)" class="node-core">
+    <rect width="170" height="90" rx="12" fill="#241312" stroke="url(#dbGrad)" stroke-width="1.8" filter="url(#nodeGlow)"/>
+    <text x="18" y="28" fill="#fb923c" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="11" font-weight="800" letter-spacing="1">PERSISTENT STORAGE</text>
+    <text x="18" y="48" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13" font-weight="700">MongoDB Database</text>
+    <text x="18" y="68" fill="#94a3b8" font-family="monospace" font-size="10">Zero-Leak Encrypted Store</text>
+    <circle cx="150" cy="24" r="4" fill="#f59e0b"/>
+  </g>
+
+  <!-- Bottom Legend Bar -->
+  <g transform="translate(260, 345)">
+    <circle cx="0" cy="0" r="4" fill="#38bdf8"/>
+    <text x="10" y="4" fill="#cbd5e1" font-family="monospace" font-size="11">Dashboard</text>
+
+    <circle cx="110" cy="0" r="4" fill="#ec4899"/>
+    <text x="120" y="4" fill="#cbd5e1" font-family="monospace" font-size="11">Extension</text>
+
+    <circle cx="215" cy="0" r="4" fill="#8b5cf6"/>
+    <text x="225" y="4" fill="#cbd5e1" font-family="monospace" font-size="11">HS512 API</text>
+
+    <circle cx="320" cy="0" r="4" fill="#10b981"/>
+    <text x="330" y="4" fill="#cbd5e1" font-family="monospace" font-size="11">AES-256-GCM</text>
+  </g>
+</svg>

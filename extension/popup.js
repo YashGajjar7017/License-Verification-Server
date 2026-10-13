@@ -54,8 +54,12 @@ const authLoggedOut = document.getElementById('authLoggedOut');
 const loginForm = document.getElementById('loginForm');
 const loginEmail = document.getElementById('loginEmail');
 const loginPassword = document.getElementById('loginPassword');
+const btnLoginSubmit = document.getElementById('btnLoginSubmit');
+const loginBtnText = document.getElementById('loginBtnText');
+const btnQuickDemoLogin = document.getElementById('btnQuickDemoLogin');
 const serverApiUrl = document.getElementById('serverApiUrl');
 const btnSaveServerUrl = document.getElementById('btnSaveServerUrl');
+const btnTestServerUrl = document.getElementById('btnTestServerUrl');
 const btnLogout = document.getElementById('btnLogout');
 const userNameEl = document.getElementById('userName');
 const userEmailEl = document.getElementById('userEmail');
@@ -81,8 +85,15 @@ async function getStoredData() {
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
       chrome.storage.local.get(['token', 'user', 'apiUrl'], (res) => resolve(res || {}));
     } else {
+      let storedUser = null;
+      try {
+        storedUser = JSON.parse(localStorage.getItem('vk_user') || 'null');
+      } catch {
+        storedUser = null;
+      }
       resolve({
         token: localStorage.getItem('vk_token'),
+        user: storedUser,
         apiUrl: localStorage.getItem('vk_api_url') || DEFAULT_API_URL,
       });
     }
@@ -94,8 +105,30 @@ async function setStoredData(data) {
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
       chrome.storage.local.set(data, resolve);
     } else {
-      if (data.token) localStorage.setItem('vk_token', data.token);
-      if (data.apiUrl) localStorage.setItem('vk_api_url', data.apiUrl);
+      if ('token' in data) {
+        if (data.token) localStorage.setItem('vk_token', data.token);
+        else localStorage.removeItem('vk_token');
+      }
+      if ('user' in data) {
+        if (data.user) localStorage.setItem('vk_user', JSON.stringify(data.user));
+        else localStorage.removeItem('vk_user');
+      }
+      if ('apiUrl' in data) {
+        if (data.apiUrl) localStorage.setItem('vk_api_url', data.apiUrl);
+        else localStorage.removeItem('vk_api_url');
+      }
+      resolve();
+    }
+  });
+}
+
+async function clearStoredAuth() {
+  return new Promise((resolve) => {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.remove(['token', 'user'], resolve);
+    } else {
+      localStorage.removeItem('vk_token');
+      localStorage.removeItem('vk_user');
       resolve();
     }
   });
@@ -155,18 +188,22 @@ async function detectActiveTab() {
 
 async function checkServerHealth() {
   const apiUrl = await getApiUrl();
-  serverApiUrl.value = apiUrl;
+  if (serverApiUrl) serverApiUrl.value = apiUrl;
 
   try {
     const healthUrl = apiUrl.replace(/\/api\/?$/, '/health');
-    const res = await fetch(healthUrl, { method: 'GET' });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    const res = await fetch(healthUrl, { method: 'GET', signal: controller.signal });
+    clearTimeout(timeoutId);
+
     if (res.ok) {
       serverDot.className = 'status-dot online';
       statusLabel.textContent = 'Online';
       return true;
     }
-  } catch {
-    // try fallback
+  } catch (err) {
+    // Health check failed or timed out
   }
 
   serverDot.className = 'status-dot offline';
@@ -195,19 +232,22 @@ async function updateAuthView() {
       authLoggedIn.classList.remove('hidden');
       authLoggedOut.classList.add('hidden');
 
-      userNameEl.textContent = user.name;
-      userEmailEl.textContent = user.email;
-      userRoleEl.textContent = `${user.role.toUpperCase()} • HS512 QUANTUM`;
-      userAvatarEl.textContent = user.name[0].toUpperCase();
+      userNameEl.textContent = user.name || 'User';
+      userEmailEl.textContent = user.email || '';
+      userRoleEl.textContent = `${(user.role || 'USER').toUpperCase()} • HS512 QUANTUM`;
+      userAvatarEl.textContent = (user.name && user.name[0]) ? user.name[0].toUpperCase() : 'U';
 
       fetchStats(apiUrl, token);
       return;
+    } else if (res.status === 401) {
+      // Session expired, clean local storage
+      await clearStoredAuth();
     }
   } catch (err) {
     console.warn('Auth check error:', err);
   }
 
-  // If token is invalid
+  // If token is invalid or request failed
   authLoggedIn.classList.add('hidden');
   authLoggedOut.classList.remove('hidden');
 }
@@ -418,16 +458,54 @@ async function autofillCredential(id, username) {
       if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query) {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tab?.id) {
+          // If browser restricted page, copy directly
+          if (
+            tab.url &&
+            (tab.url.startsWith('chrome://') ||
+              tab.url.startsWith('chrome-extension://') ||
+              tab.url.startsWith('edge://') ||
+              tab.url.startsWith('about:'))
+          ) {
+            await navigator.clipboard.writeText(password);
+            showToast('Browser system tab: password copied to clipboard! 📋');
+            return;
+          }
+
+          // Send message to content script
           chrome.tabs.sendMessage(
             tab.id,
             { action: 'AUTOFILL', username, password },
-            (response) => {
-              if (response && response.success) {
-                showToast('Autofilled credentials into active page! 🚀');
-              } else {
-                // Fallback: copy password
+            async (response) => {
+              if (chrome.runtime.lastError || !response || !response.success) {
+                // If content script was not injected on this tab yet, dynamically inject it
+                if (chrome.scripting && tab.id) {
+                  try {
+                    await chrome.scripting.executeScript({
+                      target: { tabId: tab.id },
+                      files: ['content.js'],
+                    });
+                    // Retry autofill
+                    chrome.tabs.sendMessage(
+                      tab.id,
+                      { action: 'AUTOFILL', username, password },
+                      (retryRes) => {
+                        if (retryRes && retryRes.success) {
+                          showToast('Autofilled credentials into active page! 🚀');
+                        } else {
+                          navigator.clipboard.writeText(password);
+                          showToast('Form filled & copied to clipboard! 📋');
+                        }
+                      }
+                    );
+                    return;
+                  } catch {
+                    // Script injection disallowed or tab closed
+                  }
+                }
                 navigator.clipboard.writeText(password);
-                showToast('Filled & password copied to clipboard! 📋');
+                showToast('Password copied to clipboard! 📋');
+              } else {
+                showToast('Autofilled credentials into active page! 🚀');
               }
             }
           );
@@ -435,6 +513,8 @@ async function autofillCredential(id, username) {
         }
       }
       showToast('Password copied to clipboard! 📋');
+    } else {
+      showToast('Could not retrieve secret from vault', 'error');
     }
   } catch (e) {
     showToast('Autofill request failed', 'error');
@@ -554,11 +634,24 @@ btnQuickGenPass.addEventListener('click', () => {
 // Account / Login Handling
 // ---------------------------------------------------------------------------
 
+// Quick Demo Button
+if (btnQuickDemoLogin) {
+  btnQuickDemoLogin.addEventListener('click', () => {
+    loginEmail.value = 'admin@example.com';
+    loginPassword.value = 'admin';
+    showToast('Demo credentials populated! Click Sign In ⚡');
+  });
+}
+
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const apiUrl = await getApiUrl();
   const email = loginEmail.value.trim();
   const password = loginPassword.value;
+
+  const originalText = loginBtnText ? loginBtnText.textContent : 'Sign In with HS512';
+  if (btnLoginSubmit) btnLoginSubmit.disabled = true;
+  if (loginBtnText) loginBtnText.textContent = 'Verifying HS512 Session...';
 
   try {
     const res = await fetch(`${apiUrl}/auth/login`, {
@@ -567,22 +660,31 @@ loginForm.addEventListener('submit', async (e) => {
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (res.ok && data.success) {
       await setStoredData({ token: data.accessToken, user: data.user });
-      showToast(`Signed in as ${data.user.name}! 👋`);
-      updateAuthView();
-      fetchVaultList();
+      showToast(`Signed in as ${data.user?.name || 'Administrator'}! 👋`);
+      await updateAuthView();
+      await fetchVaultList();
+      switchTab('tab-vault');
     } else {
-      showToast(data.message || 'Login failed', 'error');
+      const errMsg =
+        data.message ||
+        (data.errors && data.errors[0]?.msg) ||
+        (res.status === 401 ? 'Invalid email or password' : 'Login failed');
+      showToast(errMsg, 'error');
     }
   } catch (err) {
-    showToast('Failed to connect to authentication server', 'error');
+    console.error('Login error:', err);
+    showToast(`Cannot connect to server at ${apiUrl}. Check if backend is running.`, 'error');
+  } finally {
+    if (btnLoginSubmit) btnLoginSubmit.disabled = false;
+    if (loginBtnText) loginBtnText.textContent = originalText;
   }
 });
 
 btnLogout.addEventListener('click', async () => {
-  await setStoredData({ token: null, user: null });
+  await clearStoredAuth();
   showToast('Logged out');
   updateAuthView();
   vaultList.innerHTML = '<div class="empty-state">Logged out.</div>';
@@ -596,6 +698,22 @@ btnSaveServerUrl.addEventListener('click', async () => {
     checkServerHealth();
   }
 });
+
+if (btnTestServerUrl) {
+  btnTestServerUrl.addEventListener('click', async () => {
+    const url = serverApiUrl.value.trim();
+    if (url) {
+      await setStoredData({ apiUrl: url });
+    }
+    showToast('Pinging backend server...');
+    const isOnline = await checkServerHealth();
+    if (isOnline) {
+      showToast('Server is ONLINE & connected! ⚡', 'success');
+    } else {
+      showToast('Server is OFFLINE or unreachable.', 'error');
+    }
+  });
+}
 
 btnRefreshSite.addEventListener('click', detectActiveTab);
 
